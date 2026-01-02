@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* CSS Custom Properties for theming */
+:root {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-hover: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+}
+
+html.dark {
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-tertiary: #374151;
+    --bg-hover: #4b5563;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: #374151;
+    --border-light: #4b5563;
+}
+
+/* Base styles */
+html {
+    font-family: 'Onest', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    min-height: 100vh;
+}
+
+/* Override Tailwind classes with CSS variables */
+.bg-white {
+    background-color: var(--bg-secondary) !important;
+}
+
+.bg-white\/95 {
+    background-color: color-mix(in srgb, var(--bg-secondary) 95%, transparent) !important;
+}
+
+.dark .bg-gray-800\/95,
+html.dark .bg-gray-800\/95 {
+    background-color: color-mix(in srgb, var(--bg-secondary) 95%, transparent) !important;
+}
+
+.bg-gray-50 {
+    background-color: var(--bg-primary) !important;
+}
+
+.bg-gray-100 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.text-gray-900 {
+    color: var(--text-primary) !important;
+}
+
+.text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+.text-gray-700 {
+    color: var(--text-secondary) !important;
+}
+
+.text-gray-600 {
+    color: var(--text-secondary) !important;
+}
+
+.text-gray-500 {
+    color: var(--text-muted) !important;
+}
+
+.border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+.border-gray-300 {
+    border-color: var(--border-color) !important;
+}
+
+.divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-color) !important;
+}
+
+.divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-light) !important;
+}
+
+/* Hover states */
+.hover\:bg-gray-50:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.hover\:bg-gray-100:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+/* Form inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="datetime-local"],
+textarea,
+select {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* Card component */
+.card {
+    background-color: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(71, 85, 105, 0.5);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem 1.5rem 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Input component */
+.input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(71, 85, 105, 0.5);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder {
+    color: rgb(100, 116, 139);
+}
+
+.input:focus {
+    outline: none;
+    border-color: rgb(59, 130, 246);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Button styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: rgb(37 99 235);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: rgb(29 78 216);
+}
+
+/* Animation utilities */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}
+
+/* FullCalendar dark mode */
+.fc {
+    --fc-border-color: var(--border-color);
+    --fc-page-bg-color: var(--bg-secondary);
+    --fc-neutral-bg-color: var(--bg-tertiary);
+    --fc-list-event-hover-bg-color: var(--bg-hover);
+}
+
+.fc .fc-col-header-cell {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+    color: var(--text-primary) !important;
+}
+
+.fc .fc-daygrid-day {
+    background-color: var(--bg-secondary) !important;
+}
+
+.fc .fc-daygrid-day-number {
+    color: var(--text-primary) !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.fc .fc-button {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.fc .fc-button:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+.fc .fc-button-active {
+    background-color: rgb(37 99 235) !important;
+    color: white !important;
+}
+
+.fc .fc-toolbar-title {
+    color: var(--text-primary) !important;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border-color: var(--border-color) !important;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+    border-color: var(--border-color) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-muted);
+}

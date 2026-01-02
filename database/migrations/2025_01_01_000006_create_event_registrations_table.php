@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('event_registrations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained()->onDelete('cascade');
+            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
+            $table->enum('status', ['registered', 'present', 'absent', 'late', 'excused'])->default('registered');
+            $table->timestamp('check_in_time')->nullable();
+            $table->json('check_in_location')->nullable(); // {lat, lng}
+            $table->string('device_info')->nullable();
+            $table->string('hash')->nullable(); // Legacy support
+            $table->timestamps();
+
+            $table->unique(['event_id', 'student_id']);
+            $table->index('event_id');
+            $table->index('student_id');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('event_registrations');
+    }
+};
+
