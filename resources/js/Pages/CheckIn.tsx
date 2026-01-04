@@ -1,7 +1,137 @@
-import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import QrScanner from '@/Components/QrScanner';
+
+// Safe inline QR Scanner that won't crash the page
+function SafeQrScanner({ 
+    onScan, 
+    onError, 
+    onLog 
+}: { 
+    onScan: (data: string) => void; 
+    onError: (error: string) => void;
+    onLog: (msg: string) => void;
+}) {
+    const [status, setStatus] = useState('init');
+    const [error, setError] = useState<string | null>(null);
+    const scannerRef = useRef<any>(null);
+    const mounted = useRef(true);
+
+    useEffect(() => {
+        mounted.current = true;
+        onLog('Scanner mounting...');
+        
+        let Html5Qrcode: any = null;
+        
+        const initScanner = async () => {
+            try {
+                onLog('Loading html5-qrcode...');
+                setStatus('loading');
+                
+                // Dynamic import to catch load errors
+                const module = await import('html5-qrcode');
+                Html5Qrcode = module.Html5Qrcode;
+                
+                if (!mounted.current) return;
+                onLog('Library loaded');
+                
+                // Check if element exists
+                const element = document.getElementById('qr-scanner-view');
+                if (!element) {
+                    throw new Error('Scanner element not found');
+                }
+                
+                onLog('Creating scanner instance...');
+                setStatus('creating');
+                scannerRef.current = new Html5Qrcode('qr-scanner-view');
+                
+                onLog('Requesting camera...');
+                setStatus('requesting');
+                
+                await scannerRef.current.start(
+                    { facingMode: 'environment' },
+                    { 
+                        fps: 5, 
+                        qrbox: 200,
+                    },
+                    (decodedText: string) => {
+                        onLog('QR found: ' + decodedText.substring(0, 30) + '...');
+                        try {
+                            scannerRef.current?.stop();
+                        } catch {}
+                        onScan(decodedText);
+                    },
+                    () => {} // Ignore not found
+                );
+                
+                if (!mounted.current) {
+                    scannerRef.current?.stop();
+                    return;
+                }
+                
+                onLog('Camera started!');
+                setStatus('scanning');
+                
+            } catch (err: any) {
+                const msg = err?.message || String(err);
+                onLog('ERROR: ' + msg);
+                setError(msg);
+                setStatus('error');
+                onError(msg);
+            }
+        };
+        
+        // Delay initialization slightly
+        const timer = setTimeout(initScanner, 100);
+        
+        return () => {
+            mounted.current = false;
+            clearTimeout(timer);
+            try {
+                scannerRef.current?.stop();
+            } catch {}
+        };
+    }, []);
+
+    if (error) {
+        return (
+            <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <p className="text-red-600 font-medium mb-2">Помилка камери</p>
+                <p className="text-sm text-gray-500 mb-4">{error}</p>
+                <button onClick={() => window.location.reload()} className="btn btn-primary">
+                    Спробувати знову
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="qr-scanner-container">
+            <div className="text-center text-sm text-gray-500 mb-2">
+                Статус: {status === 'init' ? 'Ініціалізація...' : 
+                        status === 'loading' ? 'Завантаження...' :
+                        status === 'creating' ? 'Створення...' :
+                        status === 'requesting' ? 'Запит камери...' :
+                        status === 'scanning' ? '📷 Скануйте QR-код' : status}
+            </div>
+            <div 
+                id="qr-scanner-view" 
+                className="w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-black"
+                style={{ minHeight: '300px' }}
+            />
+            {status === 'scanning' && (
+                <p className="text-center text-sm text-gray-500 mt-4">
+                    Наведіть камеру на QR-код
+                </p>
+            )}
+        </div>
+    );
+}
 
 // Error Boundary to catch crashes
 class ScannerErrorBoundary extends Component<
@@ -229,7 +359,7 @@ export default function CheckIn() {
 
                         {!isProcessing && !result && showScanner && (
                             <ScannerErrorBoundary onError={(err) => log(`ErrorBoundary: ${err}`)}>
-                                <QrScanner
+                                <SafeQrScanner
                                     onScan={handleScan}
                                     onError={(error) => {
                                         log(`Scanner error: ${error}`);
@@ -239,7 +369,7 @@ export default function CheckIn() {
                                         });
                                         setShowScanner(false);
                                     }}
-                                    requireLocation={false}
+                                    onLog={log}
                                 />
                             </ScannerErrorBoundary>
                         )}
