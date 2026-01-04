@@ -48,25 +48,30 @@ function SafeQrScanner({
                 onLog('Requesting camera...');
                 setStatus('requesting');
                 
-                const screenWidth = Math.min(window.innerWidth, 400);
-                const qrboxSize = Math.floor(screenWidth * 0.7); // 70% of screen width
-                
                 await scannerRef.current.start(
                     { facingMode: 'environment' },
                     { 
-                        fps: 10, 
-                        qrbox: { width: qrboxSize, height: qrboxSize },
-                        aspectRatio: 1.0,
-                        disableFlip: false,
+                        fps: 15,
+                        qrbox: 250,
+                        formatsToSupport: [ 0 ], // QR_CODE only
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true // Use native API if available
+                        }
                     },
-                    (decodedText: string) => {
-                        onLog('QR found: ' + decodedText.substring(0, 30) + '...');
+                    (decodedText: string, result: any) => {
+                        onLog('✅ QR ЗНАЙДЕНО!');
+                        onLog('Дані: ' + decodedText.substring(0, 50));
                         try {
                             scannerRef.current?.stop();
                         } catch {}
                         onScan(decodedText);
                     },
-                    () => {} // Ignore not found
+                    (errorMessage: string) => {
+                        // Only log occasionally to avoid spam
+                        if (Math.random() < 0.01) {
+                            onLog('Сканую...');
+                        }
+                    }
                 );
                 
                 if (!mounted.current) {
@@ -126,13 +131,30 @@ function SafeQrScanner({
             </div>
             <div 
                 id="qr-scanner-view" 
-                className="w-full max-w-md mx-auto rounded-xl overflow-hidden bg-black"
-                style={{ minHeight: '350px' }}
+                className="w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-black"
+                style={{ minHeight: '280px' }}
             />
             {status === 'scanning' && (
-                <p className="text-center text-sm text-gray-500 mt-4">
-                    Наведіть камеру на QR-код
-                </p>
+                <>
+                    <p className="text-center text-sm text-gray-500 mt-4">
+                        Наведіть камеру на QR-код
+                    </p>
+                    <div className="mt-4 text-center">
+                        <button
+                            onClick={() => {
+                                const url = prompt('Введіть URL з QR коду (для тесту):');
+                                if (url) {
+                                    onLog('Ручний ввід: ' + url.substring(0, 30));
+                                    try { scannerRef.current?.stop(); } catch {}
+                                    onScan(url);
+                                }
+                            }}
+                            className="text-xs text-blue-500 underline"
+                        >
+                            Ввести код вручну
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );
