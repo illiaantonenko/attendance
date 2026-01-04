@@ -16,35 +16,49 @@ export default function CheckIn() {
     const [result, setResult] = useState<CheckInResult | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [showScanner, setShowScanner] = useState(true);
+    const [debugLog, setDebugLog] = useState<string[]>([]);
+    
+    const log = (msg: string) => {
+        console.log(msg);
+        setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+    };
 
     const handleScan = async (scannedData: string, location?: GeolocationPosition) => {
-        setIsProcessing(true);
-
-        // Extract token from URL if scanned data is a URL
-        let token = scannedData;
-        try {
-            const url = new URL(scannedData);
-            const urlToken = url.searchParams.get('token');
-            if (urlToken) {
-                token = urlToken;
-            }
-        } catch {
-            // Not a URL, use as-is
-        }
-
-        const payload: Record<string, unknown> = { token };
+        log('QR відскановано');
         
-        if (location) {
-            payload.location = {
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-            };
-        }
-
         try {
-            // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            setIsProcessing(true);
+            setShowScanner(false);
+
+            // Extract token from URL if scanned data is a URL
+            let token = scannedData;
+            try {
+                const url = new URL(scannedData);
+                const urlToken = url.searchParams.get('token');
+                if (urlToken) {
+                    token = urlToken;
+                    log('Токен витягнуто з URL');
+                }
+            } catch {
+                log('Використовую raw дані');
+            }
+
+            const payload: Record<string, unknown> = { token };
             
+            if (location) {
+                payload.location = {
+                    lat: location.coords.latitude,
+                    lng: location.coords.longitude,
+                };
+                log(`Локація: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`);
+            } else {
+                log('Без локації');
+            }
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            log(`CSRF: ${csrfToken ? 'є' : 'НЕМАЄ!'}`);
+            
+            log('Відправка запиту...');
             const response = await fetch('/api/v1/events/check-in', {
                 method: 'POST',
                 headers: {
@@ -53,37 +67,48 @@ export default function CheckIn() {
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                credentials: 'same-origin', // Include cookies for session auth
+                credentials: 'same-origin',
                 body: JSON.stringify(payload),
             });
 
-            const data = await response.json();
+            log(`Відповідь: ${response.status}`);
+            
+            let data;
+            try {
+                const text = await response.text();
+                log(`Body: ${text.substring(0, 100)}`);
+                data = JSON.parse(text);
+            } catch (parseError: any) {
+                log(`Помилка парсингу: ${parseError?.message}`);
+                data = { message: 'Невірний формат відповіді' };
+            }
 
             if (response.ok) {
+                log('Успіх!');
                 setResult({
                     success: true,
                     message: data.message || 'Відмітка успішно збережена!',
-                    event: {
-                        title: data.registration?.event_title,
-                        check_in_time: data.registration?.check_in_time,
-                    },
+                    event: data.registration ? {
+                        title: data.registration.event_title || 'Подія',
+                        check_in_time: data.registration.check_in_time || new Date().toISOString(),
+                    } : undefined,
                 });
             } else {
+                log(`Помилка сервера: ${data.message}`);
                 setResult({
                     success: false,
-                    message: data.message || 'Помилка при відмітці',
+                    message: data.message || `Помилка ${response.status}`,
                 });
             }
         } catch (error: any) {
-            console.error('Check-in error:', error);
+            log(`КРИТИЧНА ПОМИЛКА: ${error?.message || error}`);
             setResult({
                 success: false,
-                message: error?.message || 'Помилка з\'єднання. Спробуйте знову.',
+                message: 'Помилка: ' + (error?.message || 'Невідома помилка'),
             });
+        } finally {
+            setIsProcessing(false);
         }
-
-        setIsProcessing(false);
-        setShowScanner(false);
     };
 
     const resetScanner = () => {
@@ -163,7 +188,15 @@ export default function CheckIn() {
                         {!isProcessing && !result && showScanner && (
                             <QrScanner
                                 onScan={handleScan}
-                                requireLocation={true}
+                                onError={(error) => {
+                                    console.error('[CheckIn] Scanner error:', error);
+                                    setResult({
+                                        success: false,
+                                        message: 'Помилка сканера: ' + error,
+                                    });
+                                    setShowScanner(false);
+                                }}
+                                requireLocation={false}
                             />
                         )}
                     </div>
@@ -180,6 +213,26 @@ export default function CheckIn() {
                         <li>Дочекайтесь підтвердження</li>
                     </ol>
                 </div>
+
+                {/* Debug Log */}
+                {debugLog.length > 0 && (
+                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-medium text-gray-500">Debug Log:</span>
+                            <button 
+                                onClick={() => setDebugLog([])}
+                                className="text-xs text-red-500"
+                            >
+                                Очистити
+                            </button>
+                        </div>
+                        <div className="text-xs font-mono text-gray-600 dark:text-gray-400 space-y-1 max-h-40 overflow-y-auto">
+                            {debugLog.map((line, i) => (
+                                <div key={i}>{line}</div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </AuthenticatedLayout>
     );
