@@ -48,11 +48,16 @@ function SafeQrScanner({
                 onLog('Requesting camera...');
                 setStatus('requesting');
                 
+                const screenWidth = Math.min(window.innerWidth, 400);
+                const qrboxSize = Math.floor(screenWidth * 0.7); // 70% of screen width
+                
                 await scannerRef.current.start(
                     { facingMode: 'environment' },
                     { 
-                        fps: 5, 
-                        qrbox: 200,
+                        fps: 10, 
+                        qrbox: { width: qrboxSize, height: qrboxSize },
+                        aspectRatio: 1.0,
+                        disableFlip: false,
                     },
                     (decodedText: string) => {
                         onLog('QR found: ' + decodedText.substring(0, 30) + '...');
@@ -121,8 +126,8 @@ function SafeQrScanner({
             </div>
             <div 
                 id="qr-scanner-view" 
-                className="w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-black"
-                style={{ minHeight: '300px' }}
+                className="w-full max-w-md mx-auto rounded-xl overflow-hidden bg-black"
+                style={{ minHeight: '350px' }}
             />
             {status === 'scanning' && (
                 <p className="text-center text-sm text-gray-500 mt-4">
