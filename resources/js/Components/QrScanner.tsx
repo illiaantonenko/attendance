@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface QrScannerProps {
     onScan: (decodedText: string, location?: GeolocationPosition) => void;
@@ -7,11 +7,16 @@ interface QrScannerProps {
     requireLocation?: boolean;
 }
 
+type CameraFacing = 'environment' | 'user';
+
 export default function QrScanner({ onScan, onError, requireLocation = false }: QrScannerProps) {
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
     const [location, setLocation] = useState<GeolocationPosition | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [cameraFacing, setCameraFacing] = useState<CameraFacing>('environment');
+    const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
+    const [scannerReady, setScannerReady] = useState(false);
 
     useEffect(() => {
         // Get location if required
@@ -46,45 +51,66 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
         }
     }, [requireLocation, onError]);
 
+    // Check for multiple cameras
+    useEffect(() => {
+        Html5Qrcode.getCameras().then(devices => {
+            setHasMultipleCameras(devices.length > 1);
+        }).catch(() => {
+            setHasMultipleCameras(false);
+        });
+    }, []);
+
+    const startScanner = useCallback(async (facing: CameraFacing) => {
+        if (!scannerRef.current) {
+            scannerRef.current = new Html5Qrcode('qr-reader');
+        }
+
+        // Stop if already scanning
+        if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
+        }
+
+        try {
+            await scannerRef.current.start(
+                { facingMode: facing },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                },
+                (decodedText) => {
+                    setIsScanning(false);
+                    scannerRef.current?.stop().catch(() => {});
+                    onScan(decodedText, location || undefined);
+                },
+                () => {
+                    // QR code not found - this is normal
+                }
+            );
+            setIsScanning(true);
+            setScannerReady(true);
+        } catch (err) {
+            console.error('Failed to start scanner:', err);
+            onError?.('Не вдалося запустити камеру');
+        }
+    }, [location, onScan, onError]);
+
     useEffect(() => {
         // Don't start scanner if location is required but not available
         if (requireLocation && !location) {
             return;
         }
 
-        // Initialize scanner
-        scannerRef.current = new Html5QrcodeScanner(
-            'qr-reader',
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                showTorchButtonIfSupported: true,
-            },
-            false
-        );
-
-        scannerRef.current.render(
-            (decodedText) => {
-                setIsScanning(false);
-                // Stop scanning after successful read
-                scannerRef.current?.clear();
-                onScan(decodedText, location || undefined);
-            },
-            (errorMessage) => {
-                // QR code not found - this is normal, just continue scanning
-                if (!errorMessage.includes('No QR code found')) {
-                    console.warn('QR Scan error:', errorMessage);
-                }
-            }
-        );
-
-        setIsScanning(true);
+        startScanner(cameraFacing);
 
         return () => {
-            scannerRef.current?.clear().catch(() => {});
+            scannerRef.current?.stop().catch(() => {});
         };
-    }, [location, requireLocation, onScan]);
+    }, [location, requireLocation, cameraFacing]);
+
+    const switchCamera = useCallback(() => {
+        const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+        setCameraFacing(newFacing);
+    }, [cameraFacing]);
 
     if (requireLocation && locationError) {
         return (
@@ -120,8 +146,27 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
 
     return (
         <div className="qr-scanner-container">
-            <div id="qr-reader" className="w-full max-w-md mx-auto"></div>
+            {/* Camera view */}
+            <div id="qr-reader" className="w-full max-w-md mx-auto rounded-xl overflow-hidden"></div>
             
+            {/* Camera switch button */}
+            {hasMultipleCameras && scannerReady && (
+                <div className="mt-4 flex justify-center">
+                    <button
+                        onClick={switchCamera}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {cameraFacing === 'environment' ? 'Фронтальна камера' : 'Задня камера'}
+                        </span>
+                    </button>
+                </div>
+            )}
+            
+            {/* Location status */}
             {location && (
                 <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                     <p className="text-sm text-green-600 dark:text-green-400">
@@ -135,9 +180,10 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
                 </div>
             )}
 
+            {/* Scanning hint */}
             {isScanning && (
                 <div className="mt-4 text-center">
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         Наведіть камеру на QR-код для сканування
                     </p>
                 </div>
@@ -146,17 +192,20 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
             <style>{`
                 #qr-reader {
                     border: none !important;
+                    background: transparent !important;
                 }
                 #qr-reader video {
                     border-radius: 12px;
+                    width: 100% !important;
                 }
                 #qr-reader__scan_region {
                     background: transparent !important;
                 }
-                #qr-reader__dashboard {
-                    padding: 1rem !important;
-                }
-                #qr-reader__dashboard_section_swaplink {
+                #qr-reader__dashboard,
+                #qr-reader__status_span,
+                #qr-reader__camera_selection,
+                #qr-reader select,
+                #html5-qrcode-anchor-scan-type-change {
                     display: none !important;
                 }
             `}</style>
