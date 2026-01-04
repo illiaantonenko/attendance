@@ -77,8 +77,8 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
             <div className="space-y-6">
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Статистика відвідуваності</h1>
-                    <p className="text-gray-500">Аналітика та звіти по відвідуваності</p>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Статистика відвідуваності</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Аналітика та звіти по відвідуваності</p>
                 </div>
 
                 {/* Overall Stats */}
@@ -127,18 +127,18 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Attendance by Type */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">По типах подій</h2>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">По типах подій</h2>
                         <div className="space-y-4">
                             {attendanceByType.map((item) => (
                                 <div key={item.type} className="flex items-center gap-4">
                                     <div className={`w-3 h-3 rounded-full ${eventTypeColors[item.type] || 'bg-gray-500'}`} />
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                                            <span className="text-sm text-gray-500">{item.registrations} відміток</span>
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.label}</span>
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">{item.registrations} відміток</span>
                                         </div>
-                                        <div className="w-full bg-gray-100 rounded-full h-2">
+                                        <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                                             <div
                                                 className={`h-2 rounded-full ${eventTypeColors[item.type] || 'bg-gray-500'}`}
                                                 style={{ width: `${Math.min((item.registrations / (stats.totalRegistrations || 1)) * 100, 100)}%` }}
@@ -151,40 +151,40 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
                     </div>
 
                     {/* Top Groups */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Топ груп за відвідуваністю</h2>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Топ груп за відвідуваністю</h2>
                         <div className="space-y-3">
                             {topGroups.length > 0 ? (
                                 topGroups.slice(0, 5).map((group, index) => (
                                     <div key={group.id} className="flex items-center gap-3">
                                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                            index === 1 ? 'bg-gray-100 text-gray-700' :
-                                            index === 2 ? 'bg-amber-100 text-amber-700' :
-                                            'bg-gray-50 text-gray-500'
+                                            index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                                            index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-200' :
+                                            index === 2 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' :
+                                            'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                                         }`}>
                                             {index + 1}
                                         </span>
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-900">{group.name}</p>
-                                            <p className="text-xs text-gray-500">{group.students_count} студентів</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{group.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{group.students_count} студентів</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-semibold text-gray-900">{group.attendance_rate}%</p>
-                                            <p className="text-xs text-gray-500">{group.registrations} відміток</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{group.attendance_rate}%</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{group.registrations} відміток</p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-gray-500">Немає даних</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Немає даних</p>
                             )}
                         </div>
                     </div>
                 </div>
 
                 {/* Attendance Trend */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Тренд відвідуваності (останні 30 днів)</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Тренд відвідуваності (останні 30 днів)</h2>
                     {attendanceTrend.length > 0 ? (
                         <div className="h-48 flex items-end gap-1">
                             {attendanceTrend.map((item, index) => (
@@ -194,46 +194,46 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
                                     style={{ height: `${(item.count / maxTrendCount) * 100}%`, minHeight: '4px' }}
                                     title={`${item.date}: ${item.count} відміток`}
                                 >
-                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                                         {new Date(item.date).toLocaleDateString('uk', { day: 'numeric', month: 'short' })}: {item.count}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-500 text-center py-8">Немає даних за останні 30 днів</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Немає даних за останні 30 днів</p>
                     )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Past Events with Attendance */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-900">Минулі події</h2>
-                            <p className="text-sm text-gray-500">Відвідуваність на завершених заняттях</p>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Минулі події</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Відвідуваність на завершених заняттях</p>
                         </div>
-                        <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
                             {pastEvents.length > 0 ? (
                                 pastEvents.map((event) => (
-                                    <div key={event.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                                    <div key={event.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-2 h-2 rounded-full ${eventTypeColors[event.event_type] || 'bg-gray-500'}`} />
                                             <div>
-                                                <p className="font-medium text-gray-900">{event.title}</p>
-                                                <p className="text-sm text-gray-500">
+                                                <p className="font-medium text-gray-900 dark:text-white">{event.title}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     {new Date(event.start_time).toLocaleDateString('uk', { day: 'numeric', month: 'short' })}
                                                     {event.teacher && ` • ${event.teacher}`}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-gray-900">
+                                            <p className="font-semibold text-gray-900 dark:text-white">
                                                 {event.registrations_count}/{event.expected_count}
                                             </p>
                                             <p className={`text-xs font-medium ${
-                                                event.attendance_rate >= 80 ? 'text-green-600' :
-                                                event.attendance_rate >= 50 ? 'text-amber-600' :
-                                                'text-red-600'
+                                                event.attendance_rate >= 80 ? 'text-green-600 dark:text-green-400' :
+                                                event.attendance_rate >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                                                'text-red-600 dark:text-red-400'
                                             }`}>
                                                 {event.attendance_rate}%
                                             </p>
@@ -241,7 +241,7 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-6 py-8 text-center text-gray-500">
+                                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     Немає минулих подій
                                 </div>
                             )}
@@ -249,20 +249,20 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
                     </div>
 
                     {/* Upcoming Events */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-900">Заплановані події</h2>
-                            <p className="text-sm text-gray-500">Очікувана кількість студентів</p>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Заплановані події</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Очікувана кількість студентів</p>
                         </div>
-                        <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
                             {upcomingEvents.length > 0 ? (
                                 upcomingEvents.map((event) => (
-                                    <div key={event.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                                    <div key={event.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-2 h-2 rounded-full ${eventTypeColors[event.event_type] || 'bg-gray-500'}`} />
                                             <div>
-                                                <p className="font-medium text-gray-900">{event.title}</p>
-                                                <p className="text-sm text-gray-500">
+                                                <p className="font-medium text-gray-900 dark:text-white">{event.title}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     {new Date(event.start_time).toLocaleDateString('uk', { 
                                                         day: 'numeric', 
                                                         month: 'short',
@@ -274,13 +274,13 @@ export default function Statistics({ stats, attendanceByType, attendanceTrend, t
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-gray-900">{event.expected_count}</p>
-                                            <p className="text-xs text-gray-500">очікується</p>
+                                            <p className="font-semibold text-gray-900 dark:text-white">{event.expected_count}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">очікується</p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-6 py-8 text-center text-gray-500">
+                                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     Немає запланованих подій
                                 </div>
                             )}
@@ -299,21 +299,21 @@ function StatCard({ title, value, icon, color }: {
     color: 'blue' | 'indigo' | 'green' | 'purple' 
 }) {
     const colors = {
-        blue: 'bg-blue-50 text-blue-600',
-        indigo: 'bg-indigo-50 text-indigo-600',
-        green: 'bg-emerald-50 text-emerald-600',
-        purple: 'bg-purple-50 text-purple-600',
+        blue: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+        indigo: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
+        green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+        purple: 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-xl ${colors[color]}`}>
                     {icon}
                 </div>
                 <div>
-                    <p className="text-sm text-gray-500">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900">{value}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
                 </div>
             </div>
         </div>

@@ -78,7 +78,7 @@ export default function EventEdit({ event, categories, groups }: Props) {
                     </button>
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h1 className="text-xl font-semibold text-gray-900">Редагувати подію</h1>
                         <label className="flex items-center gap-2">

@@ -69,12 +69,11 @@ function SafeQrScanner({
                 await scannerRef.current.start(
                     { facingMode: 'environment' },
                     { 
-                        fps: 20,
-                        qrbox: { width: 280, height: 280 },
-                        aspectRatio: 1.0,
-                        showTorchButtonIfSupported: true,
-                        showZoomSliderIfSupported: true,
-                        defaultZoomValueIfSupported: 2,
+                        fps: 10,
+                        qrbox: 250,
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
+                        }
                     },
                     (decodedText: string, result: any) => {
                         onLog('✅ QR ЗНАЙДЕНО!');

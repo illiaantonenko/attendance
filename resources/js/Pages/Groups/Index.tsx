@@ -39,7 +39,7 @@ export default function GroupsIndex({ groups }: Props) {
                         <Link
                             key={group.id}
                             href={`/groups/${group.id}`}
-                            className="bg-white rounded-xl border border-gray-200 p-6 hover:border-blue-300 transition-colors shadow-sm"
+                            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors shadow-sm"
                         >
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">{group.name}</h3>
                             <p className="text-sm text-gray-500">
@@ -50,7 +50,7 @@ export default function GroupsIndex({ groups }: Props) {
                 </div>
                 
                 {groups.length === 0 && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 shadow-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-500 dark:text-gray-400 shadow-sm">
                         <p>Груп ще немає</p>
                     </div>
                 )}

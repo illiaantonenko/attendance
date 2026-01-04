@@ -26,14 +26,14 @@ export default function AuthenticatedLayout({ children, title }: Props) {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-all duration-300`}>
-                <div className="flex h-16 items-center gap-3 px-6 border-b border-gray-200">
+            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-all duration-300`}>
+                <div className="flex h-16 items-center gap-3 px-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <span className="text-lg font-bold text-gray-900">Attendance</span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">Attendance</span>
                 </div>
 
                 <nav className="p-4 space-y-1">
@@ -42,7 +42,7 @@ export default function AuthenticatedLayout({ children, title }: Props) {
                             key={item.name}
                             href={item.href}
                             preserveScroll
-                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             <item.icon className="w-5 h-5" />
                             <span className="font-medium">{item.name}</span>
@@ -51,14 +51,14 @@ export default function AuthenticatedLayout({ children, title }: Props) {
                 </nav>
 
                 {/* User Section */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3 px-4 py-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-medium">
                             {user?.full_name?.charAt(0) || 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name}</p>
-                            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.full_name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
                         </div>
                         <Link
                             href="/logout"
@@ -83,17 +83,17 @@ export default function AuthenticatedLayout({ children, title }: Props) {
             {/* Main Content */}
             <div className="lg:pl-64">
                 {/* Header */}
-                <header className="sticky top-0 z-30 h-16 bg-white backdrop-blur-sm border-b border-gray-200">
+                <header className="sticky top-0 z-30 h-16 bg-white dark:bg-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
                     <div className="flex h-full items-center justify-between px-4 lg:px-8">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setSidebarOpen(true)}
-                                className="lg:hidden p-2 -ml-2 text-gray-600"
+                                className="lg:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300"
                             >
                                 <MenuIcon className="w-6 h-6" />
                             </button>
                             {title && (
-                                <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+                                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
                             )}
                         </div>
                         <div className="flex items-center gap-2">

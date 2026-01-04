@@ -58,11 +58,11 @@ export default function UsersIndex({ users, filters }: Props) {
 
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-800">Користувачі</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Користувачі</h1>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                     <div className="flex flex-wrap gap-4">
                         <div className="flex-1 min-w-[200px]">
                             <input
@@ -71,14 +71,14 @@ export default function UsersIndex({ users, filters }: Props) {
                                 onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleFilter()}
                                 placeholder="Пошук за email або ім'ям..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
                         </div>
                         <div>
                             <select
                                 value={role}
                                 onChange={e => setRole(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             >
                                 <option value="">Всі ролі</option>
                                 <option value="admin">Адміністратори</option>
@@ -96,24 +96,24 @@ export default function UsersIndex({ users, filters }: Props) {
                 </div>
 
                 {/* Users Table */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Користувач</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Роль</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Група</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Дії</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Користувач</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Роль</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Група</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Дії</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {users.data.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50">
+                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                                <span className="text-gray-600 font-medium">
+                                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                                                <span className="text-gray-600 dark:text-gray-300 font-medium">
                                                     {user.profile?.firstname?.[0] || user.email[0].toUpperCase()}
                                                 </span>
                                             </div>

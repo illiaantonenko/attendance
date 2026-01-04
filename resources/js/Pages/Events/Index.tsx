@@ -26,22 +26,22 @@ export default function EventsIndex({ events }: Props) {
                     </Link>
                 </div>
                 
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Назва</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Реєстрації</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Дії</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Назва</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Тип</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Дата</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Реєстрації</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Дії</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {events.data.map((event) => (
-                                <tr key={event.id} className="hover:bg-gray-50">
+                                <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                     <td className="px-6 py-4">
-                                        <Link href={`/events/${event.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                                        <Link href={`/events/${event.id}`} className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
                                             {event.title}
                                         </Link>
                                     </td>

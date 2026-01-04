@@ -55,7 +55,7 @@ export default function Calendar({ auth, events }: CalendarProps) {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Calendar */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                         <FullCalendar
                             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                             initialView="dayGridMonth"
@@ -86,8 +86,8 @@ export default function Calendar({ auth, events }: CalendarProps) {
                 {/* Sidebar - Legend & Upcoming */}
                 <div className="space-y-6">
                     {/* Legend */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                        <h3 className="font-semibold text-gray-900 mb-3">Типи подій</h3>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Типи подій</h3>
                         <div className="space-y-2">
                             {Object.entries(eventTypeColors).map(([type, colors]) => (
                                 <div key={type} className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export default function Calendar({ auth, events }: CalendarProps) {
                                         className="w-4 h-4 rounded"
                                         style={{ backgroundColor: colors.bg }}
                                     />
-                                    <span className="text-sm text-gray-600 capitalize">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
                                         {type === 'lecture' ? 'Лекція' :
                                          type === 'seminar' ? 'Семінар' :
                                          type === 'lab' ? 'Лабораторна' : 'Іспит'}
@@ -106,8 +106,8 @@ export default function Calendar({ auth, events }: CalendarProps) {
                     </div>
 
                     {/* Today's Events */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                        <h3 className="font-semibold text-gray-900 mb-3">Сьогодні</h3>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Сьогодні</h3>
                         <div className="space-y-2">
                             {events
                                 .filter((e) => {
@@ -118,12 +118,12 @@ export default function Calendar({ auth, events }: CalendarProps) {
                                     <button
                                         key={event.id}
                                         onClick={() => setSelectedEvent(event)}
-                                        className="w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <p className="font-medium text-sm text-gray-900 truncate">
+                                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
                                             {event.title}
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
                                             {new Date(event.start_time).toLocaleTimeString('uk', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
@@ -135,7 +135,7 @@ export default function Calendar({ auth, events }: CalendarProps) {
                                 const today = new Date().toDateString();
                                 return new Date(e.start_time).toDateString() === today;
                             }).length === 0 && (
-                                <p className="text-sm text-gray-500">Подій немає</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Подій немає</p>
                             )}
                         </div>
                     </div>
@@ -145,8 +145,8 @@ export default function Calendar({ auth, events }: CalendarProps) {
             {/* Event Details Modal */}
             {selectedEvent && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeModal}>
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-start">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start">
                             <div>
                                 <span
                                     className="inline-block mb-2 px-2 py-0.5 rounded text-xs font-medium"
@@ -159,11 +159,11 @@ export default function Calendar({ auth, events }: CalendarProps) {
                                      selectedEvent.event_type === 'seminar' ? 'Семінар' :
                                      selectedEvent.event_type === 'lab' ? 'Лабораторна' : 'Іспит'}
                                 </span>
-                                <h3 className="text-lg font-semibold text-gray-900">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {selectedEvent.title}
                                 </h3>
                             </div>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
