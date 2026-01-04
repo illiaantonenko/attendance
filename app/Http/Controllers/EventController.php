@@ -8,6 +8,7 @@ use App\Models\EventRegistration;
 use App\Models\Group;
 use App\Services\QrService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class EventController extends Controller
@@ -89,6 +90,9 @@ class EventController extends Controller
         if (!empty($validated['group_ids'])) {
             $event->groups()->attach($validated['group_ids']);
         }
+
+        // Clear caches
+        $this->clearRelatedCaches($request->user()->id);
 
         return redirect()->route('events.show', $event)->with('success', 'Подію створено!');
     }
@@ -190,6 +194,9 @@ class EventController extends Controller
             $event->groups()->sync($validated['group_ids']);
         }
 
+        // Clear caches
+        $this->clearRelatedCaches($request->user()->id);
+
         return redirect()->route('events.show', $event)->with('success', 'Подію оновлено!');
     }
 
@@ -202,7 +209,19 @@ class EventController extends Controller
 
         $event->delete();
 
+        // Clear caches
+        $this->clearRelatedCaches(auth()->id());
+
         return redirect()->route('events.index')->with('success', 'Подію видалено!');
+    }
+
+    /**
+     * Clear related caches when data changes.
+     */
+    private function clearRelatedCaches(int $userId): void
+    {
+        Cache::forget("dashboard_data_{$userId}");
+        Cache::forget('statistics_data');
     }
 
     /**
@@ -229,6 +248,10 @@ class EventController extends Controller
                     : null,
             ]
         );
+
+        // Clear caches
+        $this->clearRelatedCaches($request->user()->id);
+        Cache::forget("dashboard_data_{$validated['student_id']}");
 
         return back()->with('success', 'Відмітку оновлено!');
     }
@@ -259,7 +282,12 @@ class EventController extends Controller
                         : null,
                 ]
             );
+            // Clear student's dashboard cache
+            Cache::forget("dashboard_data_{$attendance['student_id']}");
         }
+
+        // Clear teacher/admin caches
+        $this->clearRelatedCaches($request->user()->id);
 
         return back()->with('success', 'Відмітки оновлено!');
     }

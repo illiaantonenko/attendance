@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -11,9 +12,28 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $cacheKey = "dashboard_data_{$user->id}";
 
-        // Get upcoming events based on user role
-        $eventsQuery = Event::with(['teacher.profile', 'category'])
+        // Cache dashboard data for 2 minutes per user
+        $data = Cache::remember($cacheKey, 120, function () use ($user) {
+            return $this->getDashboardData($user);
+        });
+
+        return Inertia::render('Dashboard', $data);
+    }
+
+    private function getDashboardData($user): array
+    {
+        // Optimized query: select only needed columns, eager load efficiently
+        $eventsQuery = Event::select([
+                'id', 'title', 'event_type', 'start_time', 'end_time', 
+                'teacher_id', 'category_id', 'location', 'published'
+            ])
+            ->with([
+                'teacher:id,role',
+                'teacher.profile:user_id,firstname,lastname',
+                'category:id,name,color'
+            ])
             ->where('start_time', '>=', now())
             ->orderBy('start_time')
             ->limit(5);
@@ -21,6 +41,7 @@ class DashboardController extends Controller
         if ($user->isTeacher()) {
             $eventsQuery->where('teacher_id', $user->id);
         } elseif ($user->isStudent()) {
+            // Cache group IDs to avoid repeated queries
             $groupIds = $user->groups()->pluck('groups.id');
             $eventsQuery->published()
                 ->where(function ($q) use ($groupIds) {
@@ -32,33 +53,35 @@ class DashboardController extends Controller
 
         $upcomingEvents = $eventsQuery->get();
 
-        // Calculate stats
-        $statsQuery = Event::query();
-        if ($user->isTeacher()) {
-            $statsQuery->where('teacher_id', $user->id);
-        }
+        // Calculate stats with efficient counting
+        $totalEvents = $user->isTeacher() 
+            ? Event::where('teacher_id', $user->id)->count()
+            : Event::count();
+            
+        $todayEvents = $user->isTeacher()
+            ? Event::where('teacher_id', $user->id)->whereDate('start_time', today())->count()
+            : Event::whereDate('start_time', today())->count();
 
-        $totalEvents = $statsQuery->count();
-        $todayEvents = (clone $statsQuery)
-            ->whereDate('start_time', today())
-            ->count();
-
-        // Calculate attendance rate (simplified)
+        // Calculate attendance rate for students
         $attendanceRate = 0;
         if ($user->isStudent()) {
-            $registrations = $user->eventRegistrations()->count();
-            $present = $user->eventRegistrations()->where('status', 'present')->count();
-            $attendanceRate = $registrations > 0 ? round(($present / $registrations) * 100) : 0;
+            $stats = $user->eventRegistrations()
+                ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present')
+                ->first();
+            
+            $attendanceRate = $stats->total > 0 
+                ? round(($stats->present / $stats->total) * 100) 
+                : 0;
         }
 
-        return Inertia::render('Dashboard', [
+        return [
             'upcomingEvents' => $upcomingEvents,
             'stats' => [
                 'totalEvents' => $totalEvents,
                 'todayEvents' => $todayEvents,
                 'attendanceRate' => $attendanceRate,
             ],
-        ]);
+        ];
     }
 }
 

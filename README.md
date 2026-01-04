@@ -385,3 +385,5 @@ docker-compose exec mysql mysql -u attendance -psecret attendance_db
 ## 📄 Ліцензія
 
 MIT License
+# Firewall правила
+gcloud compute firewall-rules create allow-http --allow=tcp:80 --target-tags=http-server

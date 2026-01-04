@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ThemeProvider } from './contexts/ThemeContext';
+import PageTransition from './Components/PageTransition';
 
 createInertiaApp({
     title: (title) => `${title} - Attendance System`,
@@ -16,13 +17,17 @@ createInertiaApp({
     setup({ el, App, props }) {
         createRoot(el).render(
             <ThemeProvider>
-                <App {...props} />
+                <PageTransition>
+                    <App {...props} />
+                </PageTransition>
             </ThemeProvider>
         );
     },
     progress: {
         color: '#3b82f6',
         showSpinner: true,
+        includeCSS: true,
+        delay: 0,
     },
 });
 
