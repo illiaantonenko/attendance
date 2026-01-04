@@ -72,30 +72,46 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
         setDebugInfo(prev => prev + ' | Запуск камери...');
         setCameraError(null);
         
-        if (!scannerRef.current) {
-            scannerRef.current = new Html5Qrcode('qr-reader');
-        }
-
-        // Stop if already scanning
-        if (scannerRef.current.isScanning) {
-            await scannerRef.current.stop();
-        }
-
         try {
+            // Create scanner instance if not exists
+            if (!scannerRef.current) {
+                const element = document.getElementById('qr-reader');
+                if (!element) {
+                    throw new Error('QR reader element not found');
+                }
+                scannerRef.current = new Html5Qrcode('qr-reader');
+            }
+
+            // Stop if already scanning
+            if (scannerRef.current.isScanning) {
+                try {
+                    await scannerRef.current.stop();
+                } catch (stopErr) {
+                    console.warn('Error stopping scanner:', stopErr);
+                }
+            }
+
+            // Calculate responsive qrbox size
+            const screenWidth = window.innerWidth;
+            const qrboxSize = Math.min(screenWidth - 100, 250);
+
             await scannerRef.current.start(
                 { facingMode: facing },
                 {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    fps: 5, // Lower FPS for mobile
+                    qrbox: { width: qrboxSize, height: qrboxSize },
+                    aspectRatio: 1,
                 },
                 (decodedText) => {
                     setDebugInfo('QR код знайдено!');
                     setIsScanning(false);
-                    scannerRef.current?.stop().catch(() => {});
+                    try {
+                        scannerRef.current?.stop().catch(() => {});
+                    } catch {}
                     onScan(decodedText, location || undefined);
                 },
                 () => {
-                    // QR code not found - this is normal
+                    // QR code not found - this is normal, don't do anything
                 }
             );
             setIsScanning(true);
@@ -103,7 +119,7 @@ export default function QrScanner({ onScan, onError, requireLocation = false }: 
             setDebugInfo(prev => prev + ' | Камера активна ✓');
         } catch (err: any) {
             console.error('Failed to start scanner:', err);
-            const errorMsg = err?.message || 'Невідома помилка камери';
+            const errorMsg = err?.message || String(err) || 'Невідома помилка камери';
             setCameraError(errorMsg);
             setDebugInfo(`Помилка камери: ${errorMsg}`);
             onError?.('Не вдалося запустити камеру: ' + errorMsg);
