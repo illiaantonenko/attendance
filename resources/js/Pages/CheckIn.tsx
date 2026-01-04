@@ -69,24 +69,26 @@ function SafeQrScanner({
                 await scannerRef.current.start(
                     { facingMode: 'environment' },
                     { 
-                        fps: 15,
-                        qrbox: 250,
-                        formatsToSupport: [ 0 ], // QR_CODE only
-                        experimentalFeatures: {
-                            useBarCodeDetectorIfSupported: true // Use native API if available
-                        }
+                        fps: 20,
+                        qrbox: { width: 280, height: 280 },
+                        aspectRatio: 1.0,
+                        showTorchButtonIfSupported: true,
+                        showZoomSliderIfSupported: true,
+                        defaultZoomValueIfSupported: 2,
                     },
                     (decodedText: string, result: any) => {
                         onLog('✅ QR ЗНАЙДЕНО!');
                         onLog('Дані: ' + decodedText.substring(0, 50));
+                        // Vibrate on success if supported
+                        if (navigator.vibrate) navigator.vibrate(200);
                         try {
                             scannerRef.current?.stop();
                         } catch {}
                         onScan(decodedText, location || undefined);
                     },
                     (errorMessage: string) => {
-                        // Only log occasionally to avoid spam
-                        if (Math.random() < 0.01) {
+                        // Log occasionally
+                        if (Math.random() < 0.005) {
                             onLog('Сканую...');
                         }
                     }
@@ -160,16 +162,14 @@ function SafeQrScanner({
                     <p className={`text-center text-xs mt-1 ${location ? 'text-green-500' : 'text-orange-500'}`}>
                         {location ? '📍 Геолокація визначена' : '⏳ Визначення геолокації...'}
                     </p>
-                    <div className="mt-4 text-center">
+                    <div className="mt-4 flex justify-center gap-4">
                         <button
                             onClick={() => {
-                                const url = prompt('Введіть URL з QR коду (для тесту):');
+                                const url = prompt('Введіть URL з QR коду:');
                                 if (url) {
                                     onLog('Ручний ввід: ' + url.substring(0, 30));
                                     if (location) {
-                                        onLog(`З геолокацією: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`);
-                                    } else {
-                                        onLog('БЕЗ геолокації!');
+                                        onLog(`Геолокація: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`);
                                     }
                                     try { scannerRef.current?.stop(); } catch {}
                                     onScan(url, location || undefined);
@@ -177,8 +177,31 @@ function SafeQrScanner({
                             }}
                             className="text-xs text-blue-500 underline"
                         >
-                            Ввести код вручну
+                            Ввести вручну
                         </button>
+                        <label className="text-xs text-blue-500 underline cursor-pointer">
+                            📷 Завантажити фото
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                className="hidden"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    onLog('Сканую фото...');
+                                    try {
+                                        const result = await scannerRef.current?.scanFile(file, true);
+                                        if (result) {
+                                            onLog('QR з фото: ' + result.substring(0, 30));
+                                            onScan(result, location || undefined);
+                                        }
+                                    } catch (err: any) {
+                                        onLog('Не знайдено QR на фото: ' + err?.message);
+                                    }
+                                }}
+                            />
+                        </label>
                     </div>
                 </>
             )}
