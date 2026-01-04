@@ -17,8 +17,20 @@ export default function CheckIn() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [showScanner, setShowScanner] = useState(true);
 
-    const handleScan = async (token: string, location?: GeolocationPosition) => {
+    const handleScan = async (scannedData: string, location?: GeolocationPosition) => {
         setIsProcessing(true);
+
+        // Extract token from URL if scanned data is a URL
+        let token = scannedData;
+        try {
+            const url = new URL(scannedData);
+            const urlToken = url.searchParams.get('token');
+            if (urlToken) {
+                token = urlToken;
+            }
+        } catch {
+            // Not a URL, use as-is
+        }
 
         const payload: Record<string, unknown> = { token };
         

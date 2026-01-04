@@ -1,6 +1,7 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface LoginForm {
     email: string;
@@ -9,6 +10,7 @@ interface LoginForm {
 }
 
 export default function Login() {
+    const { isDark } = useTheme();
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
         password: '',
@@ -28,10 +30,10 @@ export default function Login() {
 
             <div className="card">
                 <div className="card-header text-center">
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         Вхід в систему
                     </h2>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                         Введіть дані для входу в обліковий запис
                     </p>
                 </div>
@@ -39,7 +41,7 @@ export default function Login() {
                 <div className="card-body">
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label htmlFor="email" className={`block text-sm font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                 Email адреса
                             </label>
                             <input
@@ -58,7 +60,7 @@ export default function Login() {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label htmlFor="password" className={`block text-sm font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                 Пароль
                             </label>
                             <input
@@ -81,16 +83,16 @@ export default function Login() {
                                     type="checkbox"
                                     checked={data.remember}
                                     onChange={(e) => setData('remember', e.target.checked)}
-                                    className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                                 />
-                                <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
+                                <span className={`ml-2 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                                     Запам'ятати мене
                                 </span>
                             </label>
 
                             <Link
                                 href="/forgot-password"
-                                className="text-sm text-primary-600 hover:text-primary-500"
+                                className="text-sm text-blue-600 hover:text-blue-500"
                             >
                                 Забули пароль?
                             </Link>
@@ -107,9 +109,9 @@ export default function Login() {
                 </div>
             </div>
 
-            <p className="mt-6 text-center text-sm text-slate-400">
+            <p className={`mt-6 text-center text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 Немає облікового запису?{' '}
-                <Link href="/register" className="text-primary-400 hover:text-primary-300 font-medium">
+                <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
                     Зареєструватися
                 </Link>
             </p>

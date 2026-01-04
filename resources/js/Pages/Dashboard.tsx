@@ -126,9 +126,9 @@ export default function Dashboard({ auth, upcomingEvents, stats }: DashboardProp
 
 function StatCard({ title, value, icon, color }: { title: string; value: number | string; icon: React.ReactNode; color: 'blue' | 'green' | 'purple' }) {
     const colors = {
-        blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-        green: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-        purple: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+        blue: 'bg-blue-500 text-white shadow-lg shadow-blue-500/30',
+        green: 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30',
+        purple: 'bg-purple-500 text-white shadow-lg shadow-purple-500/30',
     };
 
     return (
@@ -138,7 +138,7 @@ function StatCard({ title, value, icon, color }: { title: string; value: number 
                     {icon}
                 </div>
                 <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
                 </div>
             </div>
@@ -149,17 +149,24 @@ function StatCard({ title, value, icon, color }: { title: string; value: number 
 function EventItem({ event }: { event: Event }) {
     const startTime = new Date(event.start_time);
     
+    const badgeColors = {
+        lecture: 'bg-blue-500 text-white',
+        seminar: 'bg-emerald-500 text-white',
+        lab: 'bg-amber-500 text-white',
+        exam: 'bg-red-500 text-white',
+    };
+    
     return (
         <Link 
             href={`/events/${event.id}`}
             className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
         >
             <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex flex-col items-center justify-center">
-                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex flex-col items-center justify-center shadow-md">
+                    <span className="text-[10px] font-semibold text-blue-100 uppercase">
                         {startTime.toLocaleDateString('uk', { month: 'short' })}
                     </span>
-                    <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    <span className="text-lg font-bold text-white">
                         {startTime.getDate()}
                     </span>
                 </div>
@@ -172,11 +179,8 @@ function EventItem({ event }: { event: Event }) {
                         {event.location?.room && ` • ${event.location.room}`}
                     </p>
                 </div>
-                <div className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
-                    event.event_type === 'lecture' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' :
-                    event.event_type === 'seminar' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' :
-                    event.event_type === 'lab' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' :
-                    'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+                <div className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                    badgeColors[event.event_type as keyof typeof badgeColors] || badgeColors.lecture
                 }`}>
                     {event.event_type === 'lecture' ? 'Лекція' :
                      event.event_type === 'seminar' ? 'Семінар' :
