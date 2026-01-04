@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import jsQR from 'jsqr';
@@ -16,21 +16,26 @@ function SafeQrScanner({
     const [status, setStatus] = useState('init');
     const [error, setError] = useState<string | null>(null);
     const [location, setLocation] = useState<GeolocationPosition | null>(null);
-    const [lastScanned, setLastScanned] = useState<string | null>(null);
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const animationRef = useRef<number>(0);
     const mounted = useRef(true);
+    const lastScannedRef = useRef<string | null>(null);
+    const locationRef = useRef<GeolocationPosition | null>(null);
+    
+    // Keep refs in sync
+    locationRef.current = location;
 
-    // Get location
+    // Get location - run once
     useEffect(() => {
         if (navigator.geolocation) {
             onLog('Запит геолокації...');
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     setLocation(pos);
+                    locationRef.current = pos;
                     onLog(`📍 Геолокація: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
                 },
                 (err) => {
@@ -39,63 +44,65 @@ function SafeQrScanner({
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         }
-    }, [onLog]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const scanFrame = useCallback(() => {
-        if (!mounted.current) return;
-        
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        
-        if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-            animationRef.current = requestAnimationFrame(scanFrame);
-            return;
-        }
-
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
-            animationRef.current = requestAnimationFrame(scanFrame);
-            return;
-        }
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        try {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert',
-            });
-
-            if (code && code.data && code.data !== lastScanned) {
-                onLog('✅ QR ЗНАЙДЕНО!');
-                onLog('Дані: ' + code.data.substring(0, 50));
-                setLastScanned(code.data);
-                
-                // Vibrate on success
-                if (navigator.vibrate) navigator.vibrate(200);
-                
-                // Stop scanning
-                if (streamRef.current) {
-                    streamRef.current.getTracks().forEach(track => track.stop());
-                }
-                cancelAnimationFrame(animationRef.current);
-                
-                onScan(code.data, location || undefined);
-                return;
-            }
-        } catch (e) {
-            // Ignore scan errors, just continue
-        }
-
-        animationRef.current = requestAnimationFrame(scanFrame);
-    }, [location, lastScanned, onLog, onScan]);
-
+    // Main scanner effect - run once
     useEffect(() => {
         mounted.current = true;
         onLog('Ініціалізація сканера (jsQR)...');
         setStatus('loading');
+
+        const scanFrame = () => {
+            if (!mounted.current) return;
+            
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            
+            if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                animationRef.current = requestAnimationFrame(scanFrame);
+                return;
+            }
+
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) {
+                animationRef.current = requestAnimationFrame(scanFrame);
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            try {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert',
+                });
+
+                if (code && code.data && code.data !== lastScannedRef.current) {
+                    onLog('✅ QR ЗНАЙДЕНО!');
+                    onLog('Дані: ' + code.data.substring(0, 50));
+                    lastScannedRef.current = code.data;
+                    
+                    // Vibrate on success
+                    if (navigator.vibrate) navigator.vibrate(200);
+                    
+                    // Stop scanning
+                    if (streamRef.current) {
+                        streamRef.current.getTracks().forEach(track => track.stop());
+                    }
+                    cancelAnimationFrame(animationRef.current);
+                    
+                    onScan(code.data, locationRef.current || undefined);
+                    return;
+                }
+            } catch (e) {
+                // Ignore scan errors, just continue
+            }
+
+            animationRef.current = requestAnimationFrame(scanFrame);
+        };
 
         const startCamera = async () => {
             try {
@@ -147,51 +154,47 @@ function SafeQrScanner({
                 streamRef.current.getTracks().forEach(track => track.stop());
             }
         };
-    }, [onLog, onError, scanFrame]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Scan photo with jsQR
-    const scanPhoto = useCallback(async (file: File) => {
+    const scanPhoto = async (file: File) => {
         onLog('Сканую фото...');
         
-        return new Promise<void>((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                
-                if (!ctx) {
-                    onLog('❌ Не вдалося створити canvas');
-                    resolve();
-                    return;
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+                onLog('❌ Не вдалося створити canvas');
+                return;
+            }
+            
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'attemptBoth',
+            });
+            
+            if (code && code.data) {
+                onLog('✅ QR з фото: ' + code.data.substring(0, 40));
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
                 }
-                
-                ctx.drawImage(img, 0, 0);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: 'attemptBoth',
-                });
-                
-                if (code && code.data) {
-                    onLog('✅ QR з фото: ' + code.data.substring(0, 40));
-                    if (streamRef.current) {
-                        streamRef.current.getTracks().forEach(track => track.stop());
-                    }
-                    cancelAnimationFrame(animationRef.current);
-                    onScan(code.data, location || undefined);
-                } else {
-                    onLog('❌ QR код не знайдено на фото');
-                }
-                resolve();
-            };
-            img.onerror = () => {
-                onLog('❌ Не вдалося завантажити фото');
-                resolve();
-            };
-            img.src = URL.createObjectURL(file);
-        });
-    }, [onLog, onScan, location]);
+                cancelAnimationFrame(animationRef.current);
+                onScan(code.data, locationRef.current || undefined);
+            } else {
+                onLog('❌ QR код не знайдено на фото');
+            }
+        };
+        img.onerror = () => {
+            onLog('❌ Не вдалося завантажити фото');
+        };
+        img.src = URL.createObjectURL(file);
+    };
 
     if (error) {
         return (
