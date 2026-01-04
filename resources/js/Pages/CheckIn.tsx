@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode, useCallback } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import jsQR from 'jsqr';
 
-// Safe inline QR Scanner that won't crash the page
+// QR Scanner using jsQR library for better compatibility
 function SafeQrScanner({ 
     onScan, 
     onError, 
@@ -15,7 +16,12 @@ function SafeQrScanner({
     const [status, setStatus] = useState('init');
     const [error, setError] = useState<string | null>(null);
     const [location, setLocation] = useState<GeolocationPosition | null>(null);
-    const scannerRef = useRef<any>(null);
+    const [lastScanned, setLastScanned] = useState<string | null>(null);
+    
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const animationRef = useRef<number>(0);
     const mounted = useRef(true);
 
     // Get location
@@ -25,113 +31,178 @@ function SafeQrScanner({
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     setLocation(pos);
-                    onLog(`Геолокація: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+                    onLog(`📍 Геолокація: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
                 },
                 (err) => {
-                    onLog(`Геолокація недоступна: ${err.message}`);
+                    onLog(`⚠️ Геолокація недоступна: ${err.message}`);
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         }
-    }, []);
+    }, [onLog]);
+
+    const scanFrame = useCallback(() => {
+        if (!mounted.current) return;
+        
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        
+        if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+            animationRef.current = requestAnimationFrame(scanFrame);
+            return;
+        }
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+            animationRef.current = requestAnimationFrame(scanFrame);
+            return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert',
+            });
+
+            if (code && code.data && code.data !== lastScanned) {
+                onLog('✅ QR ЗНАЙДЕНО!');
+                onLog('Дані: ' + code.data.substring(0, 50));
+                setLastScanned(code.data);
+                
+                // Vibrate on success
+                if (navigator.vibrate) navigator.vibrate(200);
+                
+                // Stop scanning
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                }
+                cancelAnimationFrame(animationRef.current);
+                
+                onScan(code.data, location || undefined);
+                return;
+            }
+        } catch (e) {
+            // Ignore scan errors, just continue
+        }
+
+        animationRef.current = requestAnimationFrame(scanFrame);
+    }, [location, lastScanned, onLog, onScan]);
 
     useEffect(() => {
         mounted.current = true;
-        onLog('Scanner mounting...');
-        
-        let Html5Qrcode: any = null;
-        
-        const initScanner = async () => {
+        onLog('Ініціалізація сканера (jsQR)...');
+        setStatus('loading');
+
+        const startCamera = async () => {
             try {
-                onLog('Loading html5-qrcode...');
-                setStatus('loading');
-                
-                // Dynamic import to catch load errors
-                const module = await import('html5-qrcode');
-                Html5Qrcode = module.Html5Qrcode;
-                
-                if (!mounted.current) return;
-                onLog('Library loaded');
-                
-                // Check if element exists
-                const element = document.getElementById('qr-scanner-view');
-                if (!element) {
-                    throw new Error('Scanner element not found');
-                }
-                
-                onLog('Creating scanner instance...');
-                setStatus('creating');
-                scannerRef.current = new Html5Qrcode('qr-scanner-view');
-                
-                onLog('Requesting camera...');
+                onLog('Запит камери...');
                 setStatus('requesting');
-                
-                await scannerRef.current.start(
-                    { facingMode: 'environment' },
-                    { 
-                        fps: 10,
-                        qrbox: 250,
-                        experimentalFeatures: {
-                            useBarCodeDetectorIfSupported: true
-                        }
-                    },
-                    (decodedText: string, result: any) => {
-                        onLog('✅ QR ЗНАЙДЕНО!');
-                        onLog('Дані: ' + decodedText.substring(0, 50));
-                        // Vibrate on success if supported
-                        if (navigator.vibrate) navigator.vibrate(200);
-                        try {
-                            scannerRef.current?.stop();
-                        } catch {}
-                        onScan(decodedText, location || undefined);
-                    },
-                    (errorMessage: string) => {
-                        // Log occasionally
-                        if (Math.random() < 0.005) {
-                            onLog('Сканую...');
-                        }
+
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
                     }
-                );
-                
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                streamRef.current = stream;
+
                 if (!mounted.current) {
-                    scannerRef.current?.stop();
+                    stream.getTracks().forEach(track => track.stop());
                     return;
                 }
-                
-                onLog('Camera started!');
-                setStatus('scanning');
-                
+
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    videoRef.current.play();
+                    
+                    videoRef.current.onloadedmetadata = () => {
+                        onLog('📷 Камера активна! Скануйте QR-код');
+                        setStatus('scanning');
+                        animationRef.current = requestAnimationFrame(scanFrame);
+                    };
+                }
             } catch (err: any) {
                 const msg = err?.message || String(err);
-                onLog('ERROR: ' + msg);
+                onLog('❌ Помилка камери: ' + msg);
                 setError(msg);
                 setStatus('error');
                 onError(msg);
             }
         };
-        
-        // Delay initialization slightly
-        const timer = setTimeout(initScanner, 100);
-        
+
+        const timer = setTimeout(startCamera, 100);
+
         return () => {
             mounted.current = false;
             clearTimeout(timer);
-            try {
-                scannerRef.current?.stop();
-            } catch {}
+            cancelAnimationFrame(animationRef.current);
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
         };
-    }, []);
+    }, [onLog, onError, scanFrame]);
+
+    // Scan photo with jsQR
+    const scanPhoto = useCallback(async (file: File) => {
+        onLog('Сканую фото...');
+        
+        return new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                if (!ctx) {
+                    onLog('❌ Не вдалося створити canvas');
+                    resolve();
+                    return;
+                }
+                
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'attemptBoth',
+                });
+                
+                if (code && code.data) {
+                    onLog('✅ QR з фото: ' + code.data.substring(0, 40));
+                    if (streamRef.current) {
+                        streamRef.current.getTracks().forEach(track => track.stop());
+                    }
+                    cancelAnimationFrame(animationRef.current);
+                    onScan(code.data, location || undefined);
+                } else {
+                    onLog('❌ QR код не знайдено на фото');
+                }
+                resolve();
+            };
+            img.onerror = () => {
+                onLog('❌ Не вдалося завантажити фото');
+                resolve();
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    }, [onLog, onScan, location]);
 
     if (error) {
         return (
             <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </div>
-                <p className="text-red-600 font-medium mb-2">Помилка камери</p>
-                <p className="text-sm text-gray-500 mb-4">{error}</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Помилка камери</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>
                 <button onClick={() => window.location.reload()} className="btn btn-primary">
                     Спробувати знову
                 </button>
@@ -141,21 +212,43 @@ function SafeQrScanner({
 
     return (
         <div className="qr-scanner-container">
-            <div className="text-center text-sm text-gray-500 mb-2">
+            <div className="text-center text-sm text-gray-500 dark:text-gray-400 mb-2">
                 Статус: {status === 'init' ? 'Ініціалізація...' : 
                         status === 'loading' ? 'Завантаження...' :
-                        status === 'creating' ? 'Створення...' :
                         status === 'requesting' ? 'Запит камери...' :
                         status === 'scanning' ? '📷 Скануйте QR-код' : status}
             </div>
-            <div 
-                id="qr-scanner-view" 
-                className="w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-black"
-                style={{ minHeight: '280px' }}
-            />
+            
+            <div className="relative w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '1' }}>
+                <video 
+                    ref={videoRef} 
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {/* Scan overlay */}
+                {status === 'scanning' && (
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute inset-0 border-2 border-white/30" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-green-400 rounded-lg">
+                            <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-green-400 rounded-tl-lg" />
+                            <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-green-400 rounded-tr-lg" />
+                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-green-400 rounded-bl-lg" />
+                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-green-400 rounded-br-lg" />
+                        </div>
+                        {/* Scanning line animation */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 overflow-hidden">
+                            <div className="h-0.5 bg-green-400 animate-pulse" />
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {status === 'scanning' && (
                 <>
-                    <p className="text-center text-sm text-gray-500 mt-4">
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
                         Наведіть камеру на QR-код
                     </p>
                     <p className={`text-center text-xs mt-1 ${location ? 'text-green-500' : 'text-orange-500'}`}>
@@ -167,37 +260,26 @@ function SafeQrScanner({
                                 const url = prompt('Введіть URL з QR коду:');
                                 if (url) {
                                     onLog('Ручний ввід: ' + url.substring(0, 30));
-                                    if (location) {
-                                        onLog(`Геолокація: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`);
+                                    if (streamRef.current) {
+                                        streamRef.current.getTracks().forEach(track => track.stop());
                                     }
-                                    try { scannerRef.current?.stop(); } catch {}
+                                    cancelAnimationFrame(animationRef.current);
                                     onScan(url, location || undefined);
                                 }
                             }}
-                            className="text-xs text-blue-500 underline"
+                            className="px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50"
                         >
-                            Ввести вручну
+                            ⌨️ Ввести вручну
                         </button>
-                        <label className="text-xs text-blue-500 underline cursor-pointer">
+                        <label className="px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer">
                             📷 Завантажити фото
                             <input
                                 type="file"
                                 accept="image/*"
-                                capture="environment"
                                 className="hidden"
-                                onChange={async (e) => {
+                                onChange={(e) => {
                                     const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    onLog('Сканую фото...');
-                                    try {
-                                        const result = await scannerRef.current?.scanFile(file, true);
-                                        if (result) {
-                                            onLog('QR з фото: ' + result.substring(0, 30));
-                                            onScan(result, location || undefined);
-                                        }
-                                    } catch (err: any) {
-                                        onLog('Не знайдено QR на фото: ' + err?.message);
-                                    }
+                                    if (file) scanPhoto(file);
                                 }}
                             />
                         </label>
