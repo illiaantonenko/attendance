@@ -373,7 +373,30 @@ docker-compose exec mysql mysql -u attendance -psecret attendance_db
 
 ## 📚 Документація
 
-Детальна технічна документація: [PROJECT_CURRENT_STATE.md](../PROJECT_CURRENT_STATE.md)
+- **Технічна документація:** [PROJECT_CURRENT_STATE.md](../PROJECT_CURRENT_STATE.md)
+- **Інструкція з розгортання:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Швидкий старт (GCP)
+
+```bash
+# 1. Створити VM
+gcloud compute instances create attendance-server \
+  --zone=us-central1-a \
+  --machine-type=e2-small \
+  --image-family=ubuntu-2204-lts \
+  --image-project=ubuntu-os-cloud \
+  --boot-disk-size=30GB \
+  --tags=http-server,https-server
+
+# 2. Підключитись та встановити Docker
+gcloud compute ssh attendance-server --zone=us-central1-a
+
+# 3. Розгорнути (детальніше в DEPLOYMENT.md)
+git clone <repo> && cd attendance-system
+docker compose up -d
+docker compose exec app php artisan migrate --seed
+docker compose run --rm node sh -c "npm ci && npm run build"
+```
 
 ## 👨‍💻 Автор
 
@@ -385,5 +408,3 @@ docker-compose exec mysql mysql -u attendance -psecret attendance_db
 ## 📄 Ліцензія
 
 MIT License
-# Firewall правила
-gcloud compute firewall-rules create allow-http --allow=tcp:80 --target-tags=http-server
