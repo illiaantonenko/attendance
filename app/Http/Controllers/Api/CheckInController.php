@@ -147,11 +147,11 @@ class CheckInController extends Controller
 
         // Broadcast attendance event for real-time updates
         try {
-            \Log::info('Broadcasting attendance for registration: ' . $registration->id);
+            file_put_contents('/tmp/broadcast_debug.log', date('Y-m-d H:i:s') . " - Broadcasting for reg: {$registration->id}\n", FILE_APPEND);
             event(new AttendanceRegistered($registration));
-            \Log::info('Broadcast sent successfully');
+            file_put_contents('/tmp/broadcast_debug.log', date('Y-m-d H:i:s') . " - Broadcast sent OK\n", FILE_APPEND);
         } catch (\Exception $e) {
-            \Log::error('Broadcasting failed: ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
+            file_put_contents('/tmp/broadcast_debug.log', date('Y-m-d H:i:s') . " - ERROR: {$e->getMessage()}\n", FILE_APPEND);
         }
 
         return response()->json([
