@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, Event } from '@/types';
 
@@ -150,7 +150,10 @@ function EventItem({ event }: { event: Event }) {
     const startTime = new Date(event.start_time);
     
     return (
-        <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+        <Link 
+            href={`/events/${event.id}`}
+            className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+        >
             <div className="flex items-center gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex flex-col items-center justify-center">
                     <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -169,7 +172,7 @@ function EventItem({ event }: { event: Event }) {
                         {event.location?.room && ` • ${event.location.room}`}
                     </p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                <div className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
                     event.event_type === 'lecture' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' :
                     event.event_type === 'seminar' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' :
                     event.event_type === 'lab' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' :
@@ -179,8 +182,11 @@ function EventItem({ event }: { event: Event }) {
                      event.event_type === 'seminar' ? 'Семінар' :
                      event.event_type === 'lab' ? 'Лабораторна' : 'Іспит'}
                 </div>
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
             </div>
-        </div>
+        </Link>
     );
 }
 

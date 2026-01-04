@@ -32,12 +32,13 @@ interface StudentFromGroup {
 interface Props extends PageProps {
     event: Event;
     qrCode: string | null;
+    qrAvailableAt: string | null;
     allStudents: StudentFromGroup[];
     registrationsByStudent: Record<number, Registration>;
     canManualAttendance: boolean;
 }
 
-export default function EventShow({ event, qrCode, allStudents = [], registrationsByStudent = {}, canManualAttendance = false }: Props) {
+export default function EventShow({ event, qrCode, qrAvailableAt, allStudents = [], registrationsByStudent = {}, canManualAttendance = false }: Props) {
     const [registrations, setRegistrations] = useState<any[]>(event.registrations || []);
     const [isLive, setIsLive] = useState(false);
     const [showManualAttendance, setShowManualAttendance] = useState(false);
@@ -445,9 +446,81 @@ export default function EventShow({ event, qrCode, allStudents = [], registratio
                                         className="w-48 h-48"
                                     />
                                 </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
-                                    Покажіть цей код студентам для відмітки
-                                </p>
+                                <div className="mt-4 flex flex-col gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const modal = document.getElementById('qr-fullscreen-modal');
+                                            if (modal) modal.classList.remove('hidden');
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                        Показати на весь екран
+                                    </button>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                                        QR-код дійсний 10 хвилин
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* QR not yet available message */}
+                        {!qrCode && qrAvailableAt && event.qr_enabled && (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">QR-код для входу</h2>
+                                <div className="flex flex-col items-center justify-center py-8">
+                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                                        QR-код буде доступний з
+                                    </p>
+                                    <p className="text-lg font-semibold text-gray-800 dark:text-white mt-1">
+                                        {qrAvailableAt}
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                                        (за 2 години до початку)
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Fullscreen QR Modal */}
+                        {qrCode && (
+                            <div 
+                                id="qr-fullscreen-modal" 
+                                className="hidden fixed inset-0 z-50 bg-black flex items-center justify-center"
+                                onClick={(e) => {
+                                    if (e.target === e.currentTarget) {
+                                        e.currentTarget.classList.add('hidden');
+                                    }
+                                }}
+                            >
+                                <div className="text-center p-8">
+                                    <h2 className="text-2xl font-bold text-white mb-2">{event.title}</h2>
+                                    <p className="text-gray-400 mb-6">Скануйте QR-код для відмітки присутності</p>
+                                    <div className="bg-white p-6 rounded-2xl inline-block">
+                                        <img 
+                                            src={`data:image/svg+xml;base64,${qrCode}`} 
+                                            alt="QR Code" 
+                                            className="w-72 h-72 md:w-96 md:h-96"
+                                        />
+                                    </div>
+                                    <p className="text-gray-500 mt-4 text-sm">Натисніть будь-де для закриття</p>
+                                    <button
+                                        onClick={() => {
+                                            const modal = document.getElementById('qr-fullscreen-modal');
+                                            if (modal) modal.classList.add('hidden');
+                                        }}
+                                        className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                    >
+                                        Закрити
+                                    </button>
+                                </div>
                             </div>
                         )}
                         

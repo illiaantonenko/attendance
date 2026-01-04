@@ -96,9 +96,21 @@ class Event extends Model
     public function isActive(): bool
     {
         $now = now();
-        $checkInWindow = 15; // minutes before start
+        $checkInWindow = 15; // minutes before start for students
 
         return $now >= $this->start_time->subMinutes($checkInWindow)
+            && $now <= $this->end_time;
+    }
+
+    /**
+     * Check if QR code can be shown to teacher (2 hours before event)
+     */
+    public function canShowQrCode(): bool
+    {
+        $now = now();
+        $teacherWindow = 120; // 2 hours before start
+
+        return $now >= $this->start_time->subMinutes($teacherWindow)
             && $now <= $this->end_time;
     }
 

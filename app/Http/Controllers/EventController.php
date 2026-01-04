@@ -111,12 +111,19 @@ class EventController extends Controller
             'registrations.student.profile',
         ]);
 
-        // Generate QR code if needed
+        // Generate QR code if needed (show to teacher 2 hours before event)
         $qrCode = null;
         $qrData = null;
-        if ($event->qr_enabled && $event->isActive()) {
-            $qrData = $this->qrService->generate($event);
-            $qrCode = $qrData['qr_code'] ?? null;
+        $qrAvailableAt = null;
+        
+        if ($event->qr_enabled) {
+            if ($event->canShowQrCode()) {
+                $qrData = $this->qrService->generate($event);
+                $qrCode = $qrData['qr_code'] ?? null;
+            } elseif (!$event->hasEnded()) {
+                // Show when QR will be available
+                $qrAvailableAt = $event->start_time->subMinutes(120)->format('d.m.Y H:i');
+            }
         }
 
         // Get all students from event groups
@@ -141,6 +148,7 @@ class EventController extends Controller
         return Inertia::render('Events/Show', [
             'event' => $event,
             'qrCode' => $qrCode,
+            'qrAvailableAt' => $qrAvailableAt,
             'allStudents' => $allStudents->values(),
             'registrationsByStudent' => $registrationsByStudent,
             'canManualAttendance' => $event->teacher_id === auth()->id() || auth()->user()->isAdmin(),
