@@ -42,12 +42,18 @@ export default function CheckIn() {
         }
 
         try {
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
             const response = await fetch('/api/v1/events/check-in', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
+                credentials: 'same-origin', // Include cookies for session auth
                 body: JSON.stringify(payload),
             });
 
@@ -56,7 +62,7 @@ export default function CheckIn() {
             if (response.ok) {
                 setResult({
                     success: true,
-                    message: 'Відмітка успішно збережена!',
+                    message: data.message || 'Відмітка успішно збережена!',
                     event: {
                         title: data.registration?.event_title,
                         check_in_time: data.registration?.check_in_time,
@@ -68,10 +74,11 @@ export default function CheckIn() {
                     message: data.message || 'Помилка при відмітці',
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Check-in error:', error);
             setResult({
                 success: false,
-                message: 'Помилка з\'єднання. Спробуйте знову.',
+                message: error?.message || 'Помилка з\'єднання. Спробуйте знову.',
             });
         }
 
