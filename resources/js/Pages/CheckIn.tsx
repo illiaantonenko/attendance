@@ -8,14 +8,32 @@ function SafeQrScanner({
     onError, 
     onLog 
 }: { 
-    onScan: (data: string) => void; 
+    onScan: (data: string, location?: GeolocationPosition) => void; 
     onError: (error: string) => void;
     onLog: (msg: string) => void;
 }) {
     const [status, setStatus] = useState('init');
     const [error, setError] = useState<string | null>(null);
+    const [location, setLocation] = useState<GeolocationPosition | null>(null);
     const scannerRef = useRef<any>(null);
     const mounted = useRef(true);
+
+    // Get location
+    useEffect(() => {
+        if (navigator.geolocation) {
+            onLog('Запит геолокації...');
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLocation(pos);
+                    onLog(`Геолокація: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+                },
+                (err) => {
+                    onLog(`Геолокація недоступна: ${err.message}`);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+    }, []);
 
     useEffect(() => {
         mounted.current = true;
@@ -64,7 +82,7 @@ function SafeQrScanner({
                         try {
                             scannerRef.current?.stop();
                         } catch {}
-                        onScan(decodedText);
+                        onScan(decodedText, location || undefined);
                     },
                     (errorMessage: string) => {
                         // Only log occasionally to avoid spam
@@ -139,14 +157,22 @@ function SafeQrScanner({
                     <p className="text-center text-sm text-gray-500 mt-4">
                         Наведіть камеру на QR-код
                     </p>
+                    <p className={`text-center text-xs mt-1 ${location ? 'text-green-500' : 'text-orange-500'}`}>
+                        {location ? '📍 Геолокація визначена' : '⏳ Визначення геолокації...'}
+                    </p>
                     <div className="mt-4 text-center">
                         <button
                             onClick={() => {
                                 const url = prompt('Введіть URL з QR коду (для тесту):');
                                 if (url) {
                                     onLog('Ручний ввід: ' + url.substring(0, 30));
+                                    if (location) {
+                                        onLog(`З геолокацією: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`);
+                                    } else {
+                                        onLog('БЕЗ геолокації!');
+                                    }
                                     try { scannerRef.current?.stop(); } catch {}
-                                    onScan(url);
+                                    onScan(url, location || undefined);
                                 }
                             }}
                             className="text-xs text-blue-500 underline"
