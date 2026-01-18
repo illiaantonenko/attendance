@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, Event } from '@/types';
@@ -106,6 +106,11 @@ export default function EventShow({ event, qrCode, qrAvailableAt, allStudents = 
         setAttendanceChanges(changes);
     };
 
+    // Sync registrations state with props when Inertia updates the page
+    useEffect(() => {
+        setRegistrations(event.registrations || []);
+    }, [event.registrations]);
+
     useEffect(() => {
         // Try to subscribe to real-time updates
         if (window.Echo) {
@@ -122,6 +127,7 @@ export default function EventShow({ event, qrCode, qrAvailableAt, allStudents = 
                         return [...prev, {
                             id: data.registration.id,
                             student_id: data.registration.student_id,
+                            status: data.registration.status,
                             check_in_time: data.registration.check_in_time,
                             student: {
                                 full_name: data.registration.student_name,

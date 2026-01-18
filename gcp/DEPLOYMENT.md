@@ -212,3 +212,5 @@ gcloud run services update-traffic attendance-system --to-revisions=REVISION_NAM
 - Перевірте Dockerfile синтаксис
 - Перевірте доступні ресурси в Cloud Build
 
+
+

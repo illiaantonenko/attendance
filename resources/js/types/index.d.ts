@@ -36,6 +36,7 @@ export interface Event {
     teacher?: User;
     category?: EventCategory;
     groups?: Group[];
+    registrations?: EventRegistration[];
     registrations_count?: number;
     attendance_count?: number;
     created_at: string;

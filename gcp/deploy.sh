@@ -69,3 +69,5 @@ echo "  1. Set up Cloud SQL and connect it"
 echo "  2. Configure environment secrets"
 echo "  3. Run database migrations"
 
+
+

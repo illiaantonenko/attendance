@@ -51,6 +51,14 @@ class Event extends Model
     }
 
     /**
+     * Serialize dates with timezone offset for proper JavaScript parsing.
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d\TH:i:sP');
+    }
+
+    /**
      * Get the teacher who created the event
      */
     public function teacher(): BelongsTo
