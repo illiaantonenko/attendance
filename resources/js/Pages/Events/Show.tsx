@@ -118,13 +118,9 @@ export default function EventShow({ event, qrCode, qrAvailableAt, allStudents = 
                 const channel = window.Echo.channel(`event.${event.id}`);
                 
                 channel.listen('.attendance.registered', (data: { registration: Registration }) => {
-                    console.log('New attendance:', data);
+                    console.log('🔔 New attendance received:', data);
                     setRegistrations(prev => {
-                        // Check if already exists
-                        if (prev.some(r => r.student_id === data.registration.student_id)) {
-                            return prev;
-                        }
-                        return [...prev, {
+                        const newReg = {
                             id: data.registration.id,
                             student_id: data.registration.student_id,
                             status: data.registration.status,
@@ -136,7 +132,19 @@ export default function EventShow({ event, qrCode, qrAvailableAt, allStudents = 
                                     lastname: data.registration.student_name.split(' ')[0] || '',
                                 },
                             },
-                        }];
+                        };
+                        
+                        // Check if already exists - update instead of skip
+                        const existingIndex = prev.findIndex(r => r.student_id === data.registration.student_id);
+                        if (existingIndex >= 0) {
+                            console.log('📝 Updating existing registration');
+                            const updated = [...prev];
+                            updated[existingIndex] = newReg;
+                            return updated;
+                        }
+                        
+                        console.log('➕ Adding new registration');
+                        return [...prev, newReg];
                     });
                 });
 
