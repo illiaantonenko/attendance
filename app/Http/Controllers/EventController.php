@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AttendanceRegistered;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Models\EventRegistration;
@@ -9,6 +10,7 @@ use App\Models\Group;
 use App\Services\QrService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class EventController extends Controller
@@ -257,6 +259,16 @@ class EventController extends Controller
             ]
         );
 
+        // Broadcast for real-time updates
+        if (in_array($validated['status'], ['present', 'late'])) {
+            try {
+                Log::info('Broadcasting manual attendance', ['registration_id' => $registration->id]);
+                event(new AttendanceRegistered($registration));
+            } catch (\Exception $e) {
+                Log::error('Manual attendance broadcast failed', ['error' => $e->getMessage()]);
+            }
+        }
+
         // Clear caches
         $this->clearRelatedCaches($request->user()->id);
         Cache::forget("dashboard_data_{$validated['student_id']}");
@@ -277,8 +289,10 @@ class EventController extends Controller
             'attendances.*.status' => ['required', 'in:present,absent,late,excused'],
         ]);
 
+        $registrationsToNotify = [];
+        
         foreach ($validated['attendances'] as $attendance) {
-            EventRegistration::updateOrCreate(
+            $registration = EventRegistration::updateOrCreate(
                 [
                     'event_id' => $event->id,
                     'student_id' => $attendance['student_id'],
@@ -290,8 +304,24 @@ class EventController extends Controller
                         : null,
                 ]
             );
+            
+            // Collect registrations for broadcast
+            if (in_array($attendance['status'], ['present', 'late'])) {
+                $registrationsToNotify[] = $registration;
+            }
+            
             // Clear student's dashboard cache
             Cache::forget("dashboard_data_{$attendance['student_id']}");
+        }
+        
+        // Broadcast all attendance updates for real-time UI
+        foreach ($registrationsToNotify as $registration) {
+            try {
+                Log::info('Broadcasting bulk attendance', ['registration_id' => $registration->id]);
+                event(new AttendanceRegistered($registration));
+            } catch (\Exception $e) {
+                Log::error('Bulk attendance broadcast failed', ['error' => $e->getMessage()]);
+            }
         }
 
         // Clear teacher/admin caches

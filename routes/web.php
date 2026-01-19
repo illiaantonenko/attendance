@@ -23,6 +23,40 @@ Route::get('/health', function () {
         ->header('Content-Type', 'text/plain');
 });
 
+// Debug: Test broadcast (REMOVE IN PRODUCTION)
+Route::get('/debug/broadcast/{event}', function (\App\Models\Event $event) {
+    $info = [
+        'broadcast_driver' => config('broadcasting.default'),
+        'pusher_host' => config('broadcasting.connections.pusher.options.host'),
+        'pusher_port' => config('broadcasting.connections.pusher.options.port'),
+        'pusher_key' => config('broadcasting.connections.pusher.key'),
+        'channel' => 'event.' . $event->id,
+    ];
+    
+    // Get or create a test registration
+    $registration = \App\Models\EventRegistration::where('event_id', $event->id)->first();
+    
+    if (!$registration) {
+        return response()->json([
+            'error' => 'No registrations found for this event',
+            'config' => $info,
+        ]);
+    }
+    
+    try {
+        $registration->load('student.profile');
+        event(new \App\Events\AttendanceRegistered($registration));
+        $info['broadcast_result'] = 'SUCCESS - event dispatched';
+        $info['registration_id'] = $registration->id;
+    } catch (\Exception $e) {
+        $info['broadcast_result'] = 'FAILED';
+        $info['error'] = $e->getMessage();
+        $info['trace'] = $e->getTraceAsString();
+    }
+    
+    return response()->json($info, 200, [], JSON_PRETTY_PRINT);
+})->middleware(['auth', 'role:admin']);
+
 // Public routes
 Route::get('/', function () {
     if (auth()->check()) {
