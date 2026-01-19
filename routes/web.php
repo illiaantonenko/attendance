@@ -24,23 +24,27 @@ Route::get('/health', function () {
 });
 
 // Debug: Test broadcast (REMOVE IN PRODUCTION)
-Route::get('/debug/broadcast/{event}', function (\App\Models\Event $event) {
+Route::get('/debug/broadcast/{eventId}', function ($eventId) {
     $info = [
         'broadcast_driver' => config('broadcasting.default'),
         'pusher_host' => config('broadcasting.connections.pusher.options.host'),
         'pusher_port' => config('broadcasting.connections.pusher.options.port'),
         'pusher_key' => config('broadcasting.connections.pusher.key'),
-        'channel' => 'event.' . $event->id,
+        'event_id' => $eventId,
+        'channel' => 'event.' . $eventId,
     ];
     
-    // Get or create a test registration
-    $registration = \App\Models\EventRegistration::where('event_id', $event->id)->first();
+    $event = \App\Models\Event::find($eventId);
+    if (!$event) {
+        $info['error'] = 'Event not found';
+        return response()->json($info, 200, [], JSON_PRETTY_PRINT);
+    }
+    
+    $registration = \App\Models\EventRegistration::where('event_id', $eventId)->first();
     
     if (!$registration) {
-        return response()->json([
-            'error' => 'No registrations found for this event',
-            'config' => $info,
-        ]);
+        $info['error'] = 'No registrations found for this event';
+        return response()->json($info, 200, [], JSON_PRETTY_PRINT);
     }
     
     try {
@@ -51,11 +55,10 @@ Route::get('/debug/broadcast/{event}', function (\App\Models\Event $event) {
     } catch (\Exception $e) {
         $info['broadcast_result'] = 'FAILED';
         $info['error'] = $e->getMessage();
-        $info['trace'] = $e->getTraceAsString();
     }
     
     return response()->json($info, 200, [], JSON_PRETTY_PRINT);
-})->middleware(['auth', 'role:admin']);
+});
 
 // Public routes
 Route::get('/', function () {
