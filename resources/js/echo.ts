@@ -6,17 +6,18 @@ window.Pusher = Pusher;
 
 // Get configuration from environment
 const wsHost = import.meta.env.VITE_PUSHER_HOST || window.location.hostname;
-const wsPort = parseInt(import.meta.env.VITE_PUSHER_PORT || '6001');
-const wsScheme = import.meta.env.VITE_PUSHER_SCHEME || 'http';
-const forceTLS = wsScheme === 'https';
+const forceTLS = window.location.protocol === 'https:';
+// Use same port as the current page (works for both dev :8000 and prod :80/:443)
+const wsPort = parseInt(window.location.port) || (forceTLS ? 443 : 80);
 
-// Configure Echo to connect to Soketi
+// Configure Echo to connect to Soketi via Nginx proxy
+// WebSocket is proxied through /app path on the same host/port as the main app
 const echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY || 'attendance-key',
     cluster: 'mt1',
     wsHost: wsHost,
-    wsPort: forceTLS ? 443 : wsPort,
+    wsPort: wsPort,
     wssPort: forceTLS ? 443 : wsPort,
     forceTLS: forceTLS,
     disableStats: true,
