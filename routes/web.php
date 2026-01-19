@@ -23,43 +23,6 @@ Route::get('/health', function () {
         ->header('Content-Type', 'text/plain');
 });
 
-// Debug: Test broadcast (REMOVE IN PRODUCTION)
-Route::get('/debug/broadcast/{eventId}', function ($eventId) {
-    $info = [
-        'broadcast_driver' => config('broadcasting.default'),
-        'pusher_host' => config('broadcasting.connections.pusher.options.host'),
-        'pusher_port' => config('broadcasting.connections.pusher.options.port'),
-        'pusher_key' => config('broadcasting.connections.pusher.key'),
-        'event_id' => $eventId,
-        'channel' => 'event.' . $eventId,
-    ];
-    
-    $event = \App\Models\Event::find($eventId);
-    if (!$event) {
-        $info['error'] = 'Event not found';
-        return response()->json($info, 200, [], JSON_PRETTY_PRINT);
-    }
-    
-    $registration = \App\Models\EventRegistration::where('event_id', $eventId)->first();
-    
-    if (!$registration) {
-        $info['error'] = 'No registrations found for this event';
-        return response()->json($info, 200, [], JSON_PRETTY_PRINT);
-    }
-    
-    try {
-        $registration->load('student.profile');
-        event(new \App\Events\AttendanceRegistered($registration));
-        $info['broadcast_result'] = 'SUCCESS - event dispatched';
-        $info['registration_id'] = $registration->id;
-    } catch (\Exception $e) {
-        $info['broadcast_result'] = 'FAILED';
-        $info['error'] = $e->getMessage();
-    }
-    
-    return response()->json($info, 200, [], JSON_PRETTY_PRINT);
-});
-
 // Public routes
 Route::get('/', function () {
     if (auth()->check()) {
